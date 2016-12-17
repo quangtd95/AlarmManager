@@ -116,6 +116,7 @@ public class MyDatabase {
                 Alarm alarm = convertToAlarm(cursor);
                 alarms.add(alarm);
             }
+            cursor.close();
             return alarms;
         } catch (Exception e) {
             Log.e("TAGG", e.getMessage());
@@ -133,6 +134,7 @@ public class MyDatabase {
                 Alarm alarm = convertToAlarm(cursor);
                 alarms.add(alarm);
             }
+            cursor.close();
             return alarms;
         } catch (Exception e) {
             Log.e("TAGG", e.getMessage());
@@ -145,7 +147,11 @@ public class MyDatabase {
         cursor= database.rawQuery(sql,null);
         cursor.moveToFirst();
         Alarm alarm = convertToAlarm(cursor);
-        if (alarm.getSkip()==1) return true;
+        if (alarm.getSkip()==1) {
+            cursor.close();
+            return true;
+        }
+        cursor.close();
         return false;
     }
     public void setSkip(int id,boolean b){
