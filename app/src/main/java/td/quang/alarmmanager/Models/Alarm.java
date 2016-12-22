@@ -16,6 +16,7 @@ public class Alarm implements Parcelable {
     private int remain;
     private int rH;
     private int rM;
+    private long timeMin;
     public Alarm(){
 
     }
@@ -162,5 +163,13 @@ public class Alarm implements Parcelable {
         parcel.writeInt(remain);
         parcel.writeInt(rH);
         parcel.writeInt(rM);
+    }
+
+    public long getTimeMin() {
+        return timeMin;
+    }
+
+    public void setTimeMin(long timeMin) {
+        this.timeMin = timeMin;
     }
 }

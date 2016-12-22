@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import td.quang.alarmmanager.Models.Alarm;
 
@@ -26,7 +27,7 @@ public class MyDatabase {
     private static final String COLUMN_DAY = "Day";
     private static final String COLUMN_REPEAT = "Repeat";
     private static final String COLUMN_STATUS = "Status";
-    private static final String COLUMN_SKIP ="Skip";
+    private static final String COLUMN_SKIP = "Skip";
     private static final String COLUMN_REMAIN = "Remain";
     private static final String COLUMN_REMAIN_HOUR = "RemainHour";
     private static final String COLUMN_REMAIN_MINUTE = "RemainMinute";
@@ -81,10 +82,10 @@ public class MyDatabase {
         contentValues.put(COLUMN_DAY, alarm.getDay());
         contentValues.put(COLUMN_REPEAT, alarm.getRepeat());
         contentValues.put(COLUMN_STATUS, alarm.getStatus());
-        contentValues.put(COLUMN_SKIP,alarm.getSkip());
-        contentValues.put(COLUMN_REMAIN,alarm.getRemain());
-        contentValues.put(COLUMN_REMAIN_HOUR,alarm.getrH());
-        contentValues.put(COLUMN_REMAIN_MINUTE,alarm.getrM());
+        contentValues.put(COLUMN_SKIP, alarm.getSkip());
+        contentValues.put(COLUMN_REMAIN, alarm.getRemain());
+        contentValues.put(COLUMN_REMAIN_HOUR, alarm.getrH());
+        contentValues.put(COLUMN_REMAIN_MINUTE, alarm.getrM());
         return contentValues;
     }
 
@@ -141,60 +142,124 @@ public class MyDatabase {
             return null;
         }
     }
-    public boolean iSkip(int id){
+
+    public boolean iSkip(int id) {
         Cursor cursor;
-        String sql = "SELECT * FROM "+TABLE_NAME+" WHERE "+COLUMN_ID +" = "+id;
-        cursor= database.rawQuery(sql,null);
+        String sql = "SELECT * FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " = " + id;
+        cursor = database.rawQuery(sql, null);
         cursor.moveToFirst();
         Alarm alarm = convertToAlarm(cursor);
-        if (alarm.getSkip()==1) {
+        if (alarm.getSkip() == 1) {
             cursor.close();
             return true;
         }
         cursor.close();
         return false;
     }
-    public void setSkip(int id,boolean b){
+
+    public void setSkip(int id, boolean b) {
         ContentValues contentValues = new ContentValues();
-        contentValues.put(COLUMN_SKIP,(b)?1:0);
-        database.update(TABLE_NAME,contentValues,COLUMN_ID + " = "+id,null);
-    }
-    public boolean isRemain(int id){
-        Cursor cursor;
-        String sql = "SELECT * FROM "+TABLE_NAME+" WHERE "+COLUMN_ID +" = "+id;
-        cursor= database.rawQuery(sql,null);
-        cursor.moveToFirst();
-        Alarm alarm = convertToAlarm(cursor);
-        if (alarm.getRemain()==1) return true;
-        return false;
-    }
-    public void setRemain(int id,boolean b){
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(COLUMN_REMAIN,(b)?1:0);
-        database.update(TABLE_NAME,contentValues,COLUMN_ID + " = "+id,null);
-    }
-    public void setRemainTime(int id,int rH,int rM){
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(COLUMN_REMAIN_HOUR,rH);
-        contentValues.put(COLUMN_REMAIN_MINUTE,rM);
-        database.update(TABLE_NAME,contentValues,COLUMN_ID + " = "+id,null);
+        contentValues.put(COLUMN_SKIP, (b) ? 1 : 0);
+        database.update(TABLE_NAME, contentValues, COLUMN_ID + " = " + id, null);
     }
 
-    public int getRemainHour(int id){
+    public boolean isRemain(int id) {
         Cursor cursor;
-        String sql = "SELECT * FROM "+TABLE_NAME+" WHERE "+COLUMN_ID +" = "+id;
-        cursor= database.rawQuery(sql,null);
+        String sql = "SELECT * FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " = " + id;
+        cursor = database.rawQuery(sql, null);
+        cursor.moveToFirst();
+        Alarm alarm = convertToAlarm(cursor);
+        if (alarm.getRemain() == 1) return true;
+        return false;
+    }
+
+    public void setRemain(int id, boolean b) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(COLUMN_REMAIN, (b) ? 1 : 0);
+        database.update(TABLE_NAME, contentValues, COLUMN_ID + " = " + id, null);
+    }
+
+    public void setRemainTime(int id, int rH, int rM) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(COLUMN_REMAIN_HOUR, rH);
+        contentValues.put(COLUMN_REMAIN_MINUTE, rM);
+        database.update(TABLE_NAME, contentValues, COLUMN_ID + " = " + id, null);
+    }
+
+    public int getRemainHour(int id) {
+        Cursor cursor;
+        String sql = "SELECT * FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " = " + id;
+        cursor = database.rawQuery(sql, null);
         cursor.moveToFirst();
         Alarm alarm = convertToAlarm(cursor);
         return alarm.getrH();
     }
-    public int getRemainMinute(int id){
+
+    public int getRemainMinute(int id) {
         Cursor cursor;
-        String sql = "SELECT * FROM "+TABLE_NAME+" WHERE "+COLUMN_ID +" = "+id;
-        cursor= database.rawQuery(sql,null);
+        String sql = "SELECT * FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " = " + id;
+        cursor = database.rawQuery(sql, null);
         cursor.moveToFirst();
         Alarm alarm = convertToAlarm(cursor);
         return alarm.getrM();
+    }
+
+    public Alarm getNearestAlarm() {
+        ArrayList<Alarm> alarms = getAll();
+        long timeMin = Long.MAX_VALUE;
+
+        for (int i = 0; i < alarms.size(); i++) {
+            Alarm alarm = alarms.get(i);
+            alarm.setTimeMin(Long.MAX_VALUE);
+            if (alarm.getStatus() == 0) continue;
+
+            String dateString = alarm.getDay();
+
+            //mảng các ngày trong tuần sẽ báo thức
+            int[] days = new int[dateString.length()];
+            for (int j = 0 ; j <  dateString.length();j++){
+                days[j]= Integer.parseInt(dateString.charAt(j)+"") + 1;
+            }
+
+            Calendar calendar = Calendar.getInstance();
+
+            int currentDate = calendar.get(Calendar.DAY_OF_WEEK);
+            int alarmDay = 14;
+            for (int j = 0 ; j < days.length; j++){
+
+                if (alarm.getRepeat() == 1) {
+                    if(days[j]<currentDate){
+                        days[j]+=7;
+                    }
+                }
+                if (days[j]>=currentDate && days[j] < alarmDay){
+                    alarmDay = days[j];
+                }
+
+            }
+            int alarmHour = alarm.getH();
+            int alarmMinute = alarm.getM();
+            if (alarm.getRemain()==1) {
+                alarmHour = alarm.getrH();
+                alarmMinute = alarm.getrM();
+            }
+            calendar.add(Calendar.DATE,alarmDay-currentDate);
+            calendar.set(calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DATE),
+                    alarmHour,
+                    alarmMinute);
+            long timeStamp = calendar.getTimeInMillis();
+            if (timeMin>timeStamp) timeMin = timeStamp;
+            alarm.setTimeMin(timeStamp);
+            Log.e("TAGG",timeStamp+"");
+
+        }
+        for (int i = 0 ; i <  alarms.size(); i++){
+
+            if (alarms.get(i).getTimeMin() == timeMin) return alarms.get(i);
+        }
+        return null;
     }
 
     /*
@@ -222,10 +287,10 @@ public class MyDatabase {
                     + COLUMN_DAY + " TEXT NOT NULL,"
                     + COLUMN_REPEAT + " INTEGER NOT NULL,"
                     + COLUMN_STATUS + " INTEGER NOT NULL,"
-            +COLUMN_SKIP + " INTEGER NOT NULL,"
-            +COLUMN_REMAIN+" INTEGER NOT NULL,"
-            +COLUMN_REMAIN_HOUR+" INTEGER NOT NULL,"
-            +COLUMN_REMAIN_MINUTE+" INTEGER NOT NULL);");
+                    + COLUMN_SKIP + " INTEGER NOT NULL,"
+                    + COLUMN_REMAIN + " INTEGER NOT NULL,"
+                    + COLUMN_REMAIN_HOUR + " INTEGER NOT NULL,"
+                    + COLUMN_REMAIN_MINUTE + " INTEGER NOT NULL);");
         }
 
         @Override

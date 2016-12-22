@@ -78,13 +78,13 @@ public class RecyclerViewAlarmAdapter extends RecyclerView.Adapter<RecyclerViewA
     }
 
     public void removeItem(int position) {
-        /*Intent intent = new Intent();
-        intent.setAction(AlarmService.DELETE);
-        Bundle bundle = new Bundle();
-        bundle.putParcelable("data", alarms.get(position));
-        intent.putExtras(bundle);
-        mContext.sendBroadcast(intent);*/
+
         MyDatabase.getInstance(mContext).delete(alarms.get(position).getId());
+
+        Intent intent = new Intent();
+        intent.setAction(AlarmService.UPDATE);
+        mContext.sendBroadcast(intent);
+
         alarms.remove(position);
         notifyItemRemoved(position);
         notifyItemRangeChanged(position, alarms.size());

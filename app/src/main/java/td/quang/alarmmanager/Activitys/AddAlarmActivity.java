@@ -89,12 +89,12 @@ public class AddAlarmActivity extends AppCompatActivity {
                 Toast.makeText(AddAlarmActivity.this, "Thanh cong", Toast.LENGTH_SHORT).show();
                 alarm.setStatus(1);
                 MyDatabase.getInstance(AddAlarmActivity.this).add(alarm);
-               /* Intent intent = new Intent();
-                intent.setAction(AlarmService.ADD);
-                Bundle bundle = new Bundle();
+                Intent intent = new Intent();
+                intent.setAction(AlarmService.UPDATE);
+                /*Bundle bundle = new Bundle();
                 bundle.putParcelable("data",alarm);
-                intent.putExtras(bundle);
-                sendBroadcast(intent);*/
+                intent.putExtras(bundle);*/
+                sendBroadcast(intent);
                 finish();
             }
         });
